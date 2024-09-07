@@ -1,18 +1,18 @@
 "use client";
-import { useState } from "react";
 import styles from "./page.module.css";
 import Dashboard from "./components/Dashboard";
 import Inicio from "./components/Inicio";
+import { useStore } from "./statesControll";
 
 export default function Home() {
-  const [isLogin, setIsLogin] = useState(false);
+  const isLoggedIn = useStore((state) => state.Login);
 
   return (
     <div className={styles.page}>
-      {isLogin ? (
-        <Dashboard />
-      ) : (
+      {!isLoggedIn ? (
         <Inicio />
+      ) : (
+        <Dashboard />
       )}
     </div>
   );
