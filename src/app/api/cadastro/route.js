@@ -1,20 +1,51 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { hash } from 'bcrypt';
+import { neon } from '@neondatabase/serverless';
 
-export default async function POST(req, res) {
-    if (req.method !== "POST") {
-        return res.status(405).json({ message: "Method not allowed" });
+export async function POST(req) {
+    try {
+        const { nome, email, password, confirmPassword } = await req.json();
+
+        if (!nome || !email || !password || !confirmPassword) {
+            return NextResponse.json({ message: 'Todos os campos são obrigatórios!' }, { status: 400 });
+        }
+
+        if (password !== confirmPassword) {
+            return NextResponse.json({ message: 'As senhas não coincidem!' }, { status: 400 });
+        }
+
+        const hashedPassword = await hash(password, 10);
+
+        const sql = neon('postgresql://neondb_owner:wiVXC08jLhrx@ep-dawn-mode-a5pv3ntx.us-east-2.aws.neon.tech/neondb?sslmode=require');
+
+        const verifyUser = sql`
+            SELECT * FROM usuario WHERE email = ${email}`
+
+        if(verifyUser.length > 0) {
+            return NextResponse.json({ message: 'Esse email ja está sendo utilizado!' }, { status: 400 });
+        }
+
+        await sql`
+            INSERT INTO usuario (nome, email, senha) 
+            VALUES (${nome}, ${email}, ${hashedPassword})
+        `;
+
+        const user = await sql`SELECT * FROM usuario WHERE email = ${email}`;
+
+        if (user.length === 0) {
+            return NextResponse.json({ message: 'Erro ao buscar usuário.' }, { status: 500 });
+        }
+
+        return NextResponse.json({
+            message: "Cadastrado com sucesso!",
+            user: {
+                uid: user[0].uid,
+                nome: user[0].nome,
+                email: user[0].email
+            }
+        });
+    } catch (error) {
+        console.error("Erro ao cadastrar usuário: ", error);
+        return NextResponse.json({ message: "Erro ao cadastrar usuário" }, { status: 500 });
     }
-
-    const { name, email, password, confirmPassword } = req.body;
-
-    if (!name || !email || !password || !confirmPassword) {
-        return res.status(400).json({ message: "Preencha todos os campos" });
-    }
-
-    if (password !== confirmPassword) {
-        return res.status(400).json({ message: "As senhas precisam ser iguais" });
-    }
-
-    
-
 }

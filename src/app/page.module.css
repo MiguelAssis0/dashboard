@@ -198,3 +198,8 @@
 .form div a:hover{
   color: green;
 }
+
+.message {
+  text-align: center;
+  margin-top: 10px; 
+}
