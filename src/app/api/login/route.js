@@ -11,7 +11,7 @@ export async function POST(req) {
             return NextResponse.json({ message: 'Todos os campos são obrigatórios!' }, { status: 400 });
         }
 
-        const sql = neon('postgresql://neondb_owner:wiVXC08jLhrx@ep-dawn-mode-a5pv3ntx.us-east-2.aws.neon.tech/neondb?sslmode=require');
+        const sql = neon(process.env.DATABASE_URL);
 
         const userResult = await sql`
             SELECT * FROM usuario WHERE email = ${email}
